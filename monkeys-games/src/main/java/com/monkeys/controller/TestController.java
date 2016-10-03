@@ -26,15 +26,9 @@ public class TestController {
         log.info("TestController PostConstruct");
     }
 
-    @RequestMapping(value = "test/test1")
+    @RequestMapping(value = "test")
     public ModelAndView test() {
         log.info("request test");
         return new ModelAndView("test", "data", testService.getNum());
-    }
-
-    @RequestMapping(value = "HelloWorld")
-    public ModelAndView cocostest() {
-        ModelAndView mav = new ModelAndView();
-        return new ModelAndView("cocos-test/HelloWorld.html");
     }
 }

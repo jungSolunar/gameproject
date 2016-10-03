@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
+import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,24 +17,29 @@ import java.util.Set;
 public class WsHandler extends AbstractWebSocketHandler {
     private Logger log = LoggerFactory.getLogger(getClass());
 
-    Set<WebSocketSession> sessionSet = new HashSet<>();
+    Set<WebSocketSession> sessionSet;
+
+    @PostConstruct
+    public void init() {
+        log.info("wsHandler PostConstruct");
+        sessionSet = new HashSet<>();
+    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessionSet.add(session);
-        log.info("connected ws");
+        log.info("connected ws - " + session.getId());
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessionSet.remove(session);
-        log.info("disconnected ws");
+        log.info("disconnected ws - " + session.getId());
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         TextMessage msg = new TextMessage(message.getPayload());
-        log.info("" + session.getId() + " -> " + message.getPayload());
         session.sendMessage(msg);
     }
 }
