@@ -39,7 +39,7 @@
     </bean>
     
     <websocket:handlers>
-        <websocket:mapping path="/ws/connect" handler="wsHandler"/>
+        <websocket:mapping path="/ws/connect" handler="wsConnHandler"/>
     </websocket:handlers>
 
     <mvc:resources mapping="/resources/**" location="/resources/" />
