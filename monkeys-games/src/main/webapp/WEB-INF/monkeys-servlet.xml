@@ -37,7 +37,7 @@
         <property name="prefix" value="/views/" />
         <property name="suffix" value=".jsp" />
     </bean>
-    
+
     <websocket:handlers>
         <websocket:mapping path="/ws/connect" handler="wsConnHandler"/>
     </websocket:handlers>
