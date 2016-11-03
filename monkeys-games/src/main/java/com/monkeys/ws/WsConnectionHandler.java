@@ -1,18 +1,19 @@
 package com.monkeys.ws;
 
-import com.monkeys.service.RSPService;
+import com.monkeys.games.GameService;
+import com.monkeys.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.*;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Created by H on 2016. 9. 26..
@@ -26,57 +27,56 @@ public class WsConnectionHandler extends AbstractWebSocketHandler {
     private Timer timer;
     private TimerTask connPruner;
 
-    private Set<WebSocketSession> sessionSet;
+    private Set<User> userSet;
+
+    private Map<String, GameService> gameMap;
 
     @Autowired
-    private RSPService rspService;
+    private ApplicationContext context;
 
     @PostConstruct
     public void init() {
         log.info("wsHandler PostConstruct");
-        sessionSet = new HashSet<>();
+
+        userSet = new HashSet<>();
+        gameMap = new HashMap<>();
 
         timer = new Timer();
         connPruner = new ConnectionPruner();
         timer.schedule(connPruner, 0, PRUNING_PERIOD);
+
+        gameMap = context.getBeansOfType(GameService.class);
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         log.info("connected ws - " + session.getId());
-        sessionSet.add(session);
 
-        if(!rspService.joinUser(session)) {
-            log.info("room is full");
-            TextMessage msg = new TextMessage("room is full");
-            session.sendMessage(msg);
-            session.close();
-
-            return;
-        }
+        User user = new User(session);
+        userSet.add(user);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        sessionSet.remove(session);
-        rspService.evictUser(session);
+        userSet.remove(new User(session));
+
         log.info("disconnected ws - " + session.getId());
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        //TextMessage msg = new TextMessage(message.getPayload());
-        //session.sendMessage(msg);
-
-        if(rspService.isStarted()) {
-            rspService.choiceRSP(session, message.getPayload());
+        for(User user : userSet) {
+            if(user.getId().equals(session.getId())) {
+                user.recvMessage(message.getPayload());
+                break;
+            }
         }
     }
 
     private class ConnectionPruner extends TimerTask {
         @Override
         public void run() {
-            // not active connection pruning
+
         }
     }
 }
